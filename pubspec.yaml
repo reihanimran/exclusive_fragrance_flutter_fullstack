@@ -1,0 +1,68 @@
+name: exclusive_fragrance
+description: "A new Flutter project."
+publish_to: 'none'  # Prevents accidental publishing
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.4.0
+  shared_preferences: ^2.5.3
+  image_picker: ^1.1.2
+  path_provider: ^2.1.5
+  geocoding: ^4.0.0
+  geolocator: ^13.0.1
+  battery_plus: ^6.2.1
+  intl: ^0.20.2
+  provider: ^6.1.5
+  connectivity_plus: ^4.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1  # Ensure this is installed correctly
+  
+
+flutter_icons:
+  android: true
+  image_path: "assets/app_icon.png"  # Ensure this path is correct
+
+flutter_lints: ^4.0.0  # Make sure this package is in your dev dependencies if used
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/hero_image.png
+    - assets/images/Exclusive_fragrance.png
+    - assets/images/products/Chanel_No_5_Eau_de_Parfum.png
+    - assets/images/products/Dior_Jadore.png
+    - assets/images/products/sauvage.png
+    - assets/images/products/blue_de_chanel.png
+    - assets/images/products/black_opium.png
+    - assets/images/products/creed_aventus.png
+    - assets/images/products/EROS-PARFUM-VERSACE.png
+    - assets/images/products/jean_Paul_gaulter.png
+    - assets/images/products/Paco-Rabanne-One-Million.png
+    - assets/images/products/Tom_Ford_Oud_Wood_Eau_De_Parfum.png
+
+  fonts:
+    - family: Open Sans
+      fonts:
+        - asset: assets/fonts/OpenSans_Condensed-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/OpenSans_Condensed-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/OpenSans_SemiCondensed-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/OpenSans_SemiCondensed-ExtraBold.ttf
+          weight: 800
+    - family: Amarante
+      fonts:
+        - asset: assets/fonts/Amarante-Regular.ttf
+          weight: 400
