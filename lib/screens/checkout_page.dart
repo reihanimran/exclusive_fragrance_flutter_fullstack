@@ -29,23 +29,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   void initState() {
     super.initState();
-    _loadCartTotals();
-    _loadSavedShippingInfo();
+    _loadCheckoutData();
   }
 
-  Future<void> _loadCartTotals() async {
+  Future<void> _loadCheckoutData() async {
     setState(() {
-      _cartTotal = Cart().totalPrice;
-      _grandTotal = _cartTotal + _shippingCost;
+      _isLoading = true;
     });
-  }
 
-  Future<void> _loadSavedShippingInfo() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
       final response = await http.get(
-        Uri.parse('http://13.60.243.207/api/shipping'),
+        Uri.parse('http://13.60.243.207/api/checkout'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -54,16 +50,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
-          _fullName = data['full_name'] ?? '';
-          _address = data['address'] ?? '';
-          _city = data['city'] ?? '';
-          _postalCode = data['postal_code'] ?? '';
-          _phone = data['phone'] ?? '';
-        });
+
+        if (data['success'] == true) {
+          // Parse shipping details
+          final shippingDetails = data['shipping_details'];
+          if (shippingDetails != null) {
+            setState(() {
+              _fullName = shippingDetails['full_name'] ?? '';
+              _address = shippingDetails['address'] ?? '';
+              _city = shippingDetails['city'] ?? '';
+              _postalCode = shippingDetails['postal_code'] ?? '';
+              _phone = shippingDetails['phone'] ?? '';
+            });
+          }
+
+          // Parse cart and totals
+          setState(() {
+            _cartTotal = (data['cart_total'] ?? 0).toDouble();
+            _shippingCost = (data['shipping_cost'] ?? 500).toDouble();
+            _grandTotal = (data['grand_total'] ?? 0).toDouble();
+          });
+        }
       }
     } catch (e) {
-      debugPrint('Error loading shipping info: $e');
+      debugPrint('Error loading checkout data: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -104,14 +118,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       final responseData = json.decode(response.body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Clear the cart
         Cart().clearCart();
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(),
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(responseData['message'] ?? 'Order placed successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
           ),
         );
+
+        // Navigate to home page while preserving bottom navigation
+        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        // If you need to specifically navigate to the home tab in your bottom navigation
+        // You'll need to use a state management solution or a callback
+        // For example, if you're using a global method to set the active tab:
+        // AppStateManager.setActiveTab(0); // Assuming 0 is the index of your home tab
       } else {
         throw Exception(responseData['message'] ?? 'Checkout failed');
       }
@@ -156,7 +183,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     Text(
                       'Shipping Information',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -251,12 +278,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       padding: EdgeInsets.only(bottom: 16),
       child: TextFormField(
         initialValue: initialValue,
-        style: TextStyle(color: Colors.white),
+        style: TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.white70),
           enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white54),
+            borderSide: BorderSide(color: Colors.blueGrey),
             borderRadius: BorderRadius.circular(12),
           ),
           focusedBorder: OutlineInputBorder(

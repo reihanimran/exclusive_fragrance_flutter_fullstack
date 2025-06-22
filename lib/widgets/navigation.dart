@@ -6,6 +6,9 @@ import 'package:exclusive_fragrance/screens/homepage.dart';
 import 'package:exclusive_fragrance/screens/shop_page.dart';
 import 'package:exclusive_fragrance/screens/cart_page.dart';
 import 'package:exclusive_fragrance/screens/account_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Navigation extends StatefulWidget {
   const Navigation({super.key});
@@ -17,6 +20,8 @@ class Navigation extends StatefulWidget {
 class _NavigationState extends State<Navigation> {
   int _selectedIndex = 0;
   int _cartItemCount = 0;
+  String? _profilePhotoUrl;
+  bool _isLoadingProfile = true;
 
   final List<Widget> _screens = [
     HomePage(),
@@ -31,6 +36,7 @@ class _NavigationState extends State<Navigation> {
     // Add a listener to the Cart to update the UI when the cart changes
     Cart().addListener(_updateCart);
     _updateCart(); // Initialize the cart item count
+    _loadUserProfile(); // Load user profile data
   }
 
   @override
@@ -46,10 +52,90 @@ class _NavigationState extends State<Navigation> {
     });
   }
 
+  Future<void> _loadUserProfile() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+
+      final response = await http.get(
+        Uri.parse('http://13.60.243.207/api/user'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
+        setState(() {
+          _profilePhotoUrl = userData['profile_photo_url'];
+          _isLoadingProfile = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user profile: $e');
+      setState(() {
+        _isLoadingProfile = false;
+      });
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Widget _buildProfileIcon() {
+    if (_isLoadingProfile) {
+      return SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            _selectedIndex == 3 ? Color(0xFFF5D57A) : Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    if (_profilePhotoUrl != null && _profilePhotoUrl!.isNotEmpty) {
+      return ClipOval(
+        child: Image.network(
+          _profilePhotoUrl!,
+          width: 24,
+          height: 24,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(Icons.person);
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  _selectedIndex == 3 ? Color(0xFFF5D57A) : Colors.grey,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    return Icon(Icons.person);
   }
 
   @override
@@ -105,7 +191,7 @@ class _NavigationState extends State<Navigation> {
             label: 'Cart',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: _buildProfileIcon(),
             label: 'Account',
           ),
         ],

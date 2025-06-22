@@ -6,7 +6,6 @@ import 'dart:math';
 import 'package:exclusive_fragrance/provider/theme_provider.dart';
 import 'package:exclusive_fragrance/widgets/navigation.dart';
 import 'package:flutter/material.dart';
-import 'package:exclusive_fragrance/utils/handle_user_login.dart';
 import 'package:exclusive_fragrance/api/api.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -148,8 +147,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     }
 
     try {
-      final uri =
-          Uri.parse('http://13.60.243.207/api/register'); // 🔁 Replace this
+      final uri = Uri.parse('http://13.60.243.207/api/register');
       var request = http.MultipartRequest('POST', uri);
 
       request.fields['name'] = name;
@@ -159,12 +157,32 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       request.fields['phone'] = phone;
       request.fields['date_of_birth'] = dob;
 
+      // Alternative method for adding the file
       if (_selectedImage != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'Profile_photo',
-          _selectedImage!.path,
-          filename: (_selectedImage!.path),
-        ));
+        try {
+          final file = File(_selectedImage!.path);
+          if (await file.exists()) {
+            final bytes = await file.readAsBytes();
+            print('File size: ${bytes.length} bytes');
+
+            request.files.add(http.MultipartFile.fromBytes(
+              'Profile_photo',
+              bytes,
+              filename: _selectedImage!.name,
+              // You can also specify content type if needed
+              // contentType: MediaType('image', 'jpeg'),
+            ));
+            print('File added using bytes method');
+          } else {
+            print('File does not exist');
+            _showErrorDialog('Selected image file not found.');
+            return;
+          }
+        } catch (e) {
+          print('Error reading file: $e');
+          _showErrorDialog('Error reading selected image.');
+          return;
+        }
       }
 
       var response = await request.send();
@@ -252,7 +270,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
           labelColor:
               themeProvider.isDarkMode ? const Color(0xFF151E25) : Colors.white,
           unselectedLabelColor:
-              themeProvider.isDarkMode ? Colors.white70 : Color(0xFFF5D57A),
+              themeProvider.isDarkMode ? Colors.white70 : Color(0xFF151E25),
           labelStyle: TextStyle(
             fontSize: isLandscape ? 14 : 16,
             fontFamily: 'Open Sans',
@@ -273,6 +291,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _emailController,
                   decoration: const InputDecoration(
                     labelText: 'Email',
@@ -282,6 +301,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -385,6 +405,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
@@ -394,6 +415,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _emailController,
                   decoration: const InputDecoration(
                     labelText: 'Email',
@@ -403,6 +425,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -426,6 +449,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _confirmPasswordController,
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
@@ -449,6 +473,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  style: TextStyle(color: Colors.black),
                   controller: _phoneController,
                   decoration: const InputDecoration(
                     labelText: 'Phone Number',
@@ -478,7 +503,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                     TextButton(
                       onPressed: _pickDate,
                       child: Text(
-                        'Pick Date',
+                        'Select Birthday',
                         style: TextStyle(
                             color: Colors.black,
                             fontSize: 14,
